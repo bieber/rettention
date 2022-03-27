@@ -1,0 +1,6 @@
+app_id: 12345abc
+app_secret: 12345abc
+serve_address: :3230
+redirect_uri: http://localhost:3230
+deletes_per_run: 50
+credential_path: .credentials
