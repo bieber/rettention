@@ -1,4 +1,5 @@
 /*
+
  Copyright 2022, Robert Bieber
 
  This program is free software: you can redistribute it and/or modify
@@ -14,7 +15,7 @@
  You should have received a copy of the GNU General Public License
  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- */
+*/
 
 package config
 
@@ -26,7 +27,6 @@ const (
 )
 
 type User struct {
-	Username        string
 	CommentDuration string `yaml:"comment_duration"`
 	PostDuration    string `yaml:"post_duration"`
 }
@@ -38,7 +38,13 @@ type Config struct {
 	RedirectURI    string `yaml:"redirect_uri"`
 	DeletesPerRun  int    `yaml:"deletes_per_run"`
 	CredentialPath string `yaml:"credential_path"`
-	Users          []User
+	Users          map[string]User
 
 	configFile string
+}
+
+type Credential struct {
+	AccessToken  string `yaml:"access_token" json:"access_token"`
+	Expiration   int64  `yaml:"expiration" json:"expires_in"`
+	RefreshToken string `yaml:"refresh_token" json:"refresh_token"`
 }

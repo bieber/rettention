@@ -30,11 +30,11 @@ following values:
 * **deletes_per_run**: The number of items to delete each time
   rettention runs.
 * **credential_path**: The file to write Reddit OAuth credentials to.
-* **users**: An array of user configurations.
+* **users**: A map from user name to user configuration.
 
-Each entry in the `users` array should have the following keys:
+Each entry in the `users` map should have the username as its key and
+the following values:
 
-* **username**: The user's reddit username, without the /u/ prefix.
 * **comment_duration**: The amount of time to retain comments by this
   user.  This must be either the string "forever" to turn off
   deletion, or a duration string that can be parsed by Go's

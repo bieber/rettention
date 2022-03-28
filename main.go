@@ -1,4 +1,5 @@
 /*
+
  Copyright 2022, Robert Bieber
 
  This program is free software: you can redistribute it and/or modify
@@ -14,16 +15,19 @@
  You should have received a copy of the GNU General Public License
  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
- */
+*/
 
 package main
 
 import (
-	"fmt"
+	"github.com/bieber/rettention/auth"
 	"github.com/bieber/rettention/config"
 )
 
 func main() {
-	config, command := config.CommandLine()
-	fmt.Println(config, command)
+	c, command := config.CommandLine()
+	switch command {
+	case config.Auth:
+		auth.Authenticate(c)
+	}
 }
