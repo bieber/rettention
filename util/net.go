@@ -55,6 +55,32 @@ func TokenRequest(
 	return r, nil
 }
 
+func DoTokenRequest(
+	c config.Config,
+	method string,
+	uri string,
+	body map[string]string,
+	dest any,
+) error {
+	request, err := TokenRequest(c, method, uri, body)
+	if err != nil {
+		return err
+	}
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	defer response.Body.Close()
+	decoder := json.NewDecoder(response.Body)
+	if err := decoder.Decode(dest); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func APIRequest(
 	c config.Config,
 	credential config.Credential,
@@ -84,6 +110,33 @@ func APIRequest(
 	r.Header.Add("Authorization", "bearer "+credential.AccessToken)
 
 	return r, nil
+}
+
+func DoAPIRequest(
+	c config.Config,
+	credential config.Credential,
+	method string,
+	path string,
+	body any,
+	dest any,
+) error {
+	request, err := APIRequest(c, credential, method, path, body)
+	if err != nil {
+		return err
+	}
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	defer response.Body.Close()
+	decoder := json.NewDecoder(response.Body)
+	if err := decoder.Decode(dest); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func AddUserAgent(r *http.Request) {

@@ -29,5 +29,7 @@ func main() {
 	switch command {
 	case config.Auth:
 		auth.Authenticate(c)
+	case config.Run:
+		auth.Reauthenticate(c)
 	}
 }

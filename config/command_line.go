@@ -21,9 +21,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-yaml/yaml"
 	"github.com/spf13/pflag"
-	"log"
 	"os"
 	"strings"
 )
@@ -37,17 +35,7 @@ func CommandLine() (Config, command) {
 	)
 	pflag.Parse()
 
-	config := Config{configFile: *configFile}
-	fin, err := os.Open(config.configFile)
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-
-	decoder := yaml.NewDecoder(fin)
-	if err := decoder.Decode(&config); err != nil {
-		log.Fatalf(err.Error())
-	}
-	fin.Close()
+	c := ReadConfig(*configFile)
 
 	if len(pflag.Args()) != 1 {
 		usage()
@@ -56,15 +44,15 @@ func CommandLine() (Config, command) {
 
 	switch commandString {
 	case "run":
-		return config, Run
+		return c, Run
 	case "auth":
-		return config, Auth
+		return c, Auth
 	default:
 		usage()
 	}
 
 	// Unreachable, usage() will bail out before we get to this point
-	return config, Auth
+	return c, Auth
 }
 
 func usage() {

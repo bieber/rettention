@@ -22,12 +22,10 @@ package auth
 import (
 	"context"
 	"crypto/rand"
-	"encoding/json"
 	"github.com/bieber/rettention/config"
 	"github.com/bieber/rettention/util"
 	"github.com/skratchdot/open-golang/open"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
@@ -45,22 +43,63 @@ func Authenticate(c config.Config) {
 	code := authUser(c)
 	credential := fetchToken(c, code)
 
-	request, err := util.APIRequest(c, credential, "GET", "me", nil)
+	dest := struct {
+		Name string `json:"name"`
+	}{}
+	err := util.DoAPIRequest(c, credential, "GET", "me", nil, &dest)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		log.Fatal(err)
+	if dest.Name == "" {
+		log.Fatal("Failed to fetch username")
 	}
 
-	defer response.Body.Close()
-	if bytes, err := ioutil.ReadAll(response.Body); err == nil {
-		log.Println(string(bytes))
-	} else {
-		log.Fatal(err)
+	credentials := config.ReadCredentials(c)
+	credentials[dest.Name] = credential
+	config.WriteCredentials(c, credentials)
+
+	if _, ok := c.Users[dest.Name]; !ok {
+		if c.Users == nil {
+			c.Users = map[string]config.User{}
+		}
+
+		c.Users[dest.Name] = config.User{"forever", "forever"}
+		config.WriteConfig(c)
 	}
+
+	log.Printf("Authenticated %s", dest.Name)
+}
+
+func Reauthenticate(c config.Config) map[string]config.Credential {
+	existingCredentials := config.ReadCredentials(c)
+	if len(existingCredentials) == 0 {
+		return existingCredentials
+	}
+
+	newCredentials := map[string]config.Credential{}
+	for username, oldCredential := range existingCredentials {
+		newCredential := config.Credential{}
+		err := util.DoTokenRequest(
+			c,
+			"POST",
+			"https://www.reddit.com/api/v1/access_token",
+			map[string]string{
+				"grant_type":   "refresh_token",
+				"refresh_token": oldCredential.RefreshToken,
+			},
+			&newCredential,
+		)
+		if err != nil {
+			log.Printf("Failed to refresh credential for %s", username)
+			continue
+		}
+
+		newCredential.Expiration += time.Now().Unix()
+		newCredentials[username] = newCredential
+	}
+
+	config.WriteCredentials(c, newCredentials)
+	return newCredentials
 }
 
 func randomSecret(length int) string {
@@ -148,7 +187,8 @@ func authUser(c config.Config) string {
 }
 
 func fetchToken(c config.Config, code string) config.Credential {
-	request, err := util.TokenRequest(
+	credential := config.Credential{}
+	err := util.DoTokenRequest(
 		c,
 		"POST",
 		"https://www.reddit.com/api/v1/access_token",
@@ -157,20 +197,9 @@ func fetchToken(c config.Config, code string) config.Credential {
 			"code":         code,
 			"redirect_uri": c.RedirectURI,
 		},
+		&credential,
 	)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer response.Body.Close()
-	credential := config.Credential{}
-	decoder := json.NewDecoder(response.Body)
-	if err := decoder.Decode(&credential); err != nil {
 		log.Fatal(err)
 	}
 
