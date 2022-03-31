@@ -46,7 +46,7 @@ func Authenticate(c config.Config) {
 	dest := struct {
 		Name string `json:"name"`
 	}{}
-	err := util.DoAPIRequest(c, credential, "GET", "me", nil, &dest)
+	err := util.DoAPIRequest(credential, "GET", "api/v1/me", nil, &dest)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func Reauthenticate(c config.Config) map[string]config.Credential {
 			"POST",
 			"https://www.reddit.com/api/v1/access_token",
 			map[string]string{
-				"grant_type":   "refresh_token",
+				"grant_type":    "refresh_token",
 				"refresh_token": oldCredential.RefreshToken,
 			},
 			&newCredential,
@@ -169,7 +169,7 @@ func authUser(c config.Config) string {
 	q.Set("state", secret)
 	q.Set("redirect_uri", c.RedirectURI)
 	q.Set("duration", "permanent")
-	q.Set("scope", "read edit identity")
+	q.Set("scope", "read edit identity history")
 	authURI.RawQuery = q.Encode()
 
 	open.Run(authURI.String())

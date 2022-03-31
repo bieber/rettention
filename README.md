@@ -27,8 +27,6 @@ following values:
 * **serve_address**: The address at which to run the local server for
   OAuth.
 * **redirect_uri**: The redirect URI to use for OAuth.
-* **deletes_per_run**: The number of items to delete each time
-  rettention runs.
 * **credential_path**: The file to write Reddit OAuth credentials to.
 * **users**: A map from user name to user configuration.
 
@@ -68,17 +66,10 @@ run, this command does two things:
 The run command runs a single round of content deletion.  It first
 fetches the oldest comments and posts for each user specified in the
 config and then begins deleting content older than the specified
-retention period for its user and type.  The run command is limited by
-the `deletes_per_run` key in the config file: it will not make more
-calls to the Reddit API than that number.
-
-You'll want to set `deletes_per_run` to a level that won't trigger
-Reddit API rate limiting and then run the command periodically using
-`cron` or a similar tool to enforce your retention policies on an
-ongoing basis.  You will be notified via an error message if the
-command runs into rate limiting from Reddit.  For more information on
-rate limits, see [Reddit's API
-documentation](https://github.com/reddit-archive/reddit/wiki/API#rules).
+retention period for its user and type.  It continues running until
+all expired entries have been deleted.  This may take a while for
+older accounts on the first run as Reddit's rate limits will slow the
+script down.
 
 ## Credential Security
 

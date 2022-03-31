@@ -23,10 +23,56 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/bieber/rettention/config"
+	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 )
+
+// Pause when the rate limit drops to this number of requests to
+// ensure we don't hit 0
+const requestHeadroom = 5
+
+// Add this many seconds to the wait for a rate limit reset to ensure
+// we don't send too early
+const resetHeadroom = 5 * time.Second
+
+var incomingHeaders chan http.Header = make(chan http.Header)
+var consumeRequest chan bool = make(chan bool)
+
+func init() {
+	go func() {
+		consumeRequest <- true
+
+		for {
+			headers := <-incomingHeaders
+
+			remainingRequests, err := strconv.ParseFloat(
+				headers.Get("X-Ratelimit-Remaining"),
+				64,
+			)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if remainingRequests < requestHeadroom {
+				resetTime, err := strconv.ParseFloat(
+					headers.Get("X-Ratelimit-Reset"),
+					64,
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				time.Sleep(time.Duration(resetTime))
+			}
+
+			consumeRequest <- true
+		}
+	}()
+}
 
 func TokenRequest(
 	c config.Config,
@@ -62,6 +108,8 @@ func DoTokenRequest(
 	body map[string]string,
 	dest any,
 ) error {
+	<-consumeRequest
+
 	request, err := TokenRequest(c, method, uri, body)
 	if err != nil {
 		return err
@@ -71,6 +119,8 @@ func DoTokenRequest(
 	if err != nil {
 		return err
 	}
+
+	incomingHeaders <- response.Header
 
 	defer response.Body.Close()
 	decoder := json.NewDecoder(response.Body)
@@ -82,7 +132,6 @@ func DoTokenRequest(
 }
 
 func APIRequest(
-	c config.Config,
 	credential config.Credential,
 	method string,
 	path string,
@@ -99,7 +148,7 @@ func APIRequest(
 
 	r, err := http.NewRequest(
 		method,
-		"https://oauth.reddit.com/api/v1/"+path,
+		"https://oauth.reddit.com/"+path,
 		bodyBuffer,
 	)
 	if err != nil {
@@ -113,14 +162,15 @@ func APIRequest(
 }
 
 func DoAPIRequest(
-	c config.Config,
 	credential config.Credential,
 	method string,
 	path string,
 	body any,
 	dest any,
 ) error {
-	request, err := APIRequest(c, credential, method, path, body)
+	<-consumeRequest
+
+	request, err := APIRequest(credential, method, path, body)
 	if err != nil {
 		return err
 	}
@@ -129,6 +179,8 @@ func DoAPIRequest(
 	if err != nil {
 		return err
 	}
+
+	incomingHeaders <- response.Header
 
 	defer response.Body.Close()
 	decoder := json.NewDecoder(response.Body)

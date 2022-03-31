@@ -36,7 +36,6 @@ type Config struct {
 	AppSecret      string `yaml:"app_secret"`
 	ServeAddress   string `yaml:"serve_address"`
 	RedirectURI    string `yaml:"redirect_uri"`
-	DeletesPerRun  int    `yaml:"deletes_per_run"`
 	CredentialPath string `yaml:"credential_path"`
 	Users          map[string]User
 
