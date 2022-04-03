@@ -24,8 +24,14 @@ import (
 	"github.com/bieber/rettention/config"
 	"github.com/bieber/rettention/util"
 	"log"
+	"math/rand"
+	"strings"
 	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
 
 func Run(c config.Config) {
 	credentials := auth.Reauthenticate(c)
@@ -135,6 +141,25 @@ func deleteAll(credential config.Credential, toDelete []string) error {
 	log.Printf("Deleting %d entries", len(toDelete))
 
 	for i, id := range toDelete {
+		if strings.HasPrefix(id, "t1") {
+			err := util.DoAPIRequest(
+				credential,
+				"POST",
+				"api/editusertext",
+				map[string]string{
+					"api_type":      "json",
+					"return_rtjson": "false",
+					"text":          randomText(100),
+					"thing_id":      id,
+				},
+				nil,
+			)
+
+			if err != nil {
+				return err
+			}
+		}
+
 		err := util.DoAPIRequest(
 			credential,
 			"POST",
@@ -152,4 +177,14 @@ func deleteAll(credential config.Credential, toDelete []string) error {
 	}
 
 	return nil
+}
+
+func randomText(n int) string {
+	letters := []rune("abcdefghijklmnopqrstuvwxyz ")
+	text := make([]rune, n)
+	for i := 0; i < n; i++ {
+		text[i] = letters[rand.Intn(len(letters))]
+	}
+
+	return string(text)
 }
