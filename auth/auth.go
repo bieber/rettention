@@ -91,6 +91,7 @@ func Reauthenticate(c config.Config) map[string]config.Credential {
 		)
 		if err != nil {
 			log.Printf("Failed to refresh credential for %s", username)
+			newCredentials[username] = oldCredential
 			continue
 		}
 

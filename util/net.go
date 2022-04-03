@@ -20,9 +20,10 @@
 package util
 
 import (
-	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/bieber/rettention/config"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -66,7 +67,13 @@ func init() {
 					log.Fatal(err)
 				}
 
-				time.Sleep(time.Duration(resetTime))
+				resetDuration := time.Duration(resetTime) * time.Second
+				log.Printf(
+					"Waiting %s for rate-limiting",
+					resetDuration.String(),
+				)
+
+				time.Sleep(resetDuration)
 			}
 
 			consumeRequest <- true
@@ -123,6 +130,16 @@ func DoTokenRequest(
 	incomingHeaders <- response.Header
 
 	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			body = []byte{}
+		}
+
+		return fmt.Errorf("[%d] %s", response.StatusCode, string(body))
+	}
+
 	decoder := json.NewDecoder(response.Body)
 	if err := decoder.Decode(dest); err != nil {
 		return err
@@ -135,21 +152,18 @@ func APIRequest(
 	credential config.Credential,
 	method string,
 	path string,
-	body any,
+	body map[string]string,
 ) (*http.Request, error) {
 
-	bodyBuffer := bytes.NewBuffer([]byte{})
-	if body != nil {
-		encoder := json.NewEncoder(bodyBuffer)
-		if err := encoder.Encode(body); err != nil {
-			return nil, err
-		}
+	bodyValues := url.Values{}
+	for k, v := range body {
+		bodyValues.Add(k, v)
 	}
 
 	r, err := http.NewRequest(
 		method,
 		"https://oauth.reddit.com/"+path,
-		bodyBuffer,
+		strings.NewReader(bodyValues.Encode()),
 	)
 	if err != nil {
 		return r, err
@@ -165,7 +179,7 @@ func DoAPIRequest(
 	credential config.Credential,
 	method string,
 	path string,
-	body any,
+	body map[string]string,
 	dest any,
 ) error {
 	<-consumeRequest
@@ -183,9 +197,21 @@ func DoAPIRequest(
 	incomingHeaders <- response.Header
 
 	defer response.Body.Close()
-	decoder := json.NewDecoder(response.Body)
-	if err := decoder.Decode(dest); err != nil {
-		return err
+
+	if response.StatusCode != 200 {
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			body = []byte{}
+		}
+
+		return fmt.Errorf("[%d] %s", response.StatusCode, string(body))
+	}
+
+	if dest != nil {
+		decoder := json.NewDecoder(response.Body)
+		if err := decoder.Decode(dest); err != nil {
+			return err
+		}
 	}
 
 	return nil

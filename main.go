@@ -22,6 +22,7 @@ package main
 import (
 	"github.com/bieber/rettention/auth"
 	"github.com/bieber/rettention/config"
+	"github.com/bieber/rettention/run"
 )
 
 func main() {
@@ -30,6 +31,6 @@ func main() {
 	case config.Auth:
 		auth.Authenticate(c)
 	case config.Run:
-		auth.Reauthenticate(c)
+		run.Run(c)
 	}
 }

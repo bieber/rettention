@@ -25,8 +25,10 @@ following values:
 * **app_id**: The Reddit app ID.
 * **app_secret**: The secret for your Reddit app.
 * **serve_address**: The address at which to run the local server for
-  OAuth.
-* **redirect_uri**: The redirect URI to use for OAuth.
+  OAuth.  For example use `:3000` to run on localhost at port 3000.
+* **redirect_uri**: The redirect URI to use for OAuth.  If you used
+  `:3000` for `serve_address` then the corresponding `redirect_uri`
+  would be `http://localhost:3000`
 * **credential_path**: The file to write Reddit OAuth credentials to.
 * **users**: A map from user name to user configuration.
 
@@ -41,6 +43,9 @@ the following values:
   This must be either the string "forever" to turn off deletion, or a
   duration string that can be parsed by Go's
   [time.ParseDuration](https://pkg.go.dev/time#example-ParseDuration).
+
+The auth command automatically adds entries to the `users` key as you
+authenticate them.
 
 ## Commands
 
