@@ -63,7 +63,7 @@ func Authenticate(c config.Config) {
 			c.Users = map[string]config.User{}
 		}
 
-		c.Users[dest.Name] = config.User{"forever", "forever"}
+		c.Users[dest.Name] = config.User{"forever", "forever", []string{}}
 		config.WriteConfig(c)
 	}
 

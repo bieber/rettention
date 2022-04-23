@@ -43,6 +43,9 @@ the following values:
   This must be either the string "forever" to turn off deletion, or a
   duration string that can be parsed by Go's
   [time.ParseDuration](https://pkg.go.dev/time#example-ParseDuration).
+* **exclude_subreddits**: This key allows you to exclude certain
+  subreddits from retention.  No posts or comments in the listed
+  subreddits will be deleted.
 
 The auth command automatically adds entries to the `users` key as you
 authenticate them.

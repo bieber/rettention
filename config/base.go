@@ -27,8 +27,9 @@ const (
 )
 
 type User struct {
-	CommentDuration string `yaml:"comment_duration"`
-	PostDuration    string `yaml:"post_duration"`
+	CommentDuration   string   `yaml:"comment_duration"`
+	PostDuration      string   `yaml:"post_duration"`
+	ExcludeSubreddits []string `yaml:"exclude_subreddits"`
 }
 
 type Config struct {

@@ -86,6 +86,11 @@ func fetchToDelete(
 		return
 	}
 
+	excludeSubreddits := map[string]bool{}
+	for _, v := range user.ExcludeSubreddits {
+		excludeSubreddits[strings.ToLower(v)] = true
+	}
+
 	commentMin := time.Now().Add(-commentDuration).Unix()
 	postMin := time.Now().Add(-postDuration).Unix()
 
@@ -97,8 +102,9 @@ func fetchToDelete(
 				After    string
 				Children []struct {
 					Data struct {
-						Name    string
-						Created float64
+						Name      string
+						Created   float64
+						Subreddit string
 					}
 					Kind string
 				}
@@ -112,6 +118,11 @@ func fetchToDelete(
 		}
 
 		for _, child := range dest.Data.Children {
+			lowerSubreddit := strings.ToLower(child.Data.Subreddit)
+			if _, ok := excludeSubreddits[lowerSubreddit]; ok {
+				continue
+			}
+
 			switch child.Kind {
 			case "t1":
 				if int64(child.Data.Created) < commentMin {
