@@ -105,6 +105,7 @@ func fetchToDelete(
 						Name      string
 						Created   float64
 						Subreddit string
+						Saved     bool
 					}
 					Kind string
 				}
@@ -118,6 +119,10 @@ func fetchToDelete(
 		}
 
 		for _, child := range dest.Data.Children {
+			if child.Data.Saved {
+				continue
+			}
+
 			lowerSubreddit := strings.ToLower(child.Data.Subreddit)
 			if _, ok := excludeSubreddits[lowerSubreddit]; ok {
 				continue
