@@ -173,6 +173,7 @@ func authUser(c config.Config) string {
 	q.Set("scope", "read edit identity history")
 	authURI.RawQuery = q.Encode()
 
+	log.Printf("Opening %s", authURI.String())
 	open.Run(authURI.String())
 
 	response := <-outputSignal
