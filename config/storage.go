@@ -35,7 +35,7 @@ func ReadConfig(path string) Config {
 
 	decoder := yaml.NewDecoder(fin)
 	if err := decoder.Decode(&c); err != nil {
-		log.Fatal(err)
+		log.Println("Error reading credentials", err)
 	}
 
 	return c
